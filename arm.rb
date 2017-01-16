@@ -8,9 +8,9 @@ end
 src_host = ARGV[0]
 dst_host = ARGV[1]
 
-src_monitor_conn = Redis.new(:host => src_host)
-src_conn = Redis.new(:host => src_host)
-dst_conn = Redis.new(:host => dst_host)
+src_monitor_conn = Redis.new(host: src_host)
+src_conn = Redis.new(host: src_host)
+dst_conn = Redis.new(host: dst_host)
 
 abort('No keys found') if src_conn.dbsize == 0
 
@@ -29,7 +29,6 @@ log = []
 Thread.new do
   src_monitor_conn.monitor do |line|
     log << line if line.include?('"set"') || line.include?('"incr"')
-    # killing redis connection on break for now, this will need to be threaded later
   end
 end
 
@@ -40,9 +39,9 @@ src_conn.keys.each do |key|
   key_migration(key, dst_conn, ttl, dump)
 end
 
-puts "The keys have been restored to the destination server"
-puts "Monitoring for key updates..."
-puts "Type Quit or Exit to quit."
+puts 'The keys have been restored to the destination server'
+puts 'Monitoring for key updates...'
+puts 'Type Quit or Exit to quit.'
 
 loop do
   # Migrate Any Updated Keys
@@ -58,5 +57,6 @@ loop do
     key_migration(key, dst_conn, ttl, dump)
     log.delete_if { |line| line.include?(key) }
   end
-sleep 0.1
+
+  sleep 0.1
 end
