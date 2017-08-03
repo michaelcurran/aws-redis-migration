@@ -1,18 +1,33 @@
+#!/usr/bin/env ruby
+
 require 'redis'
 
-unless ARGV.length == 2
+unless ARGV.length == 2 || ARGV.length == 4
   puts "#{$PROGRAM_NAME} source destination"
+  puts 'or'
+  puts "#{$PROGRAM_NAME} source source_port destination destination_port"
   exit 1
 end
 
 src_host = ARGV[0]
-dst_host = ARGV[1]
 
-src_monitor_conn = Redis.new(host: src_host)
-src_conn = Redis.new(host: src_host)
-dst_conn = Redis.new(host: dst_host)
+if ARGV.length == 4
+  src_port = ARGV[1]
+  dst_host = ARGV[2]
+  dst_port = ARGV[3]
 
-abort('No keys found') if src_conn.dbsize == 0
+  src_monitor_conn = Redis.new(host: src_host, port: src_port)
+  src_conn = Redis.new(host: src_host, port: src_port)
+  dst_conn = Redis.new(host: dst_host, port: dst_port)
+else
+  dst_host = ARGV[1]
+
+  src_monitor_conn = Redis.new(host: src_host)
+  src_conn = Redis.new(host: src_host)
+  dst_conn = Redis.new(host: dst_host)
+end
+
+abort('No keys found') if src_conn.dbsize.zero?
 
 def key_migration(key, dst_conn, ttl, dump)
   ttl == -1 ? dst_conn.restore(key, 0, dump) : dst_conn.restore(key, ttl, dump)
