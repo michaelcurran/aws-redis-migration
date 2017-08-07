@@ -49,6 +49,8 @@ end
 
 # Initial Migration of Keys
 src_conn.keys.each do |key|
+  skip if key == 'ElastiCacheMasterReplicationTimestamp'
+
   ttl = src_conn.ttl(key)
   dump = src_conn.dump(key)
   key_migration(key, dst_conn, ttl, dump)
